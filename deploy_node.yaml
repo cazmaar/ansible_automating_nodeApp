@@ -1,0 +1,74 @@
+---
+- name: Install node and npm on the digital ocean server #name of the play
+  hosts: node_app_server
+  tasks:
+    - name: update apt repo before using Install
+      ansible.builtin.apt:
+        update_cache: yes #sets cache update to yes.
+        force_apt_get: yes #forces usage of apt-get.
+        cache_valid_time: 3600 #shouldn't update apt for another 3600s
+    - name: install npm and node-js on the server.
+      ansible.builtin.apt:
+        pkg: #because i am installing multiple packages
+          - nodejs
+          - npm
+
+
+- name: create a service user for node app
+  hosts: node_app_server
+  vars_files:
+    - variables.yaml
+  tasks:
+    - name: create linux user
+      user:
+        name: "{{user_name}}"
+        comment: "{{user_name}} account"
+        group: "{{user_group}}"
+      register: user_creation_result 
+    - debug: msg={{user_creation_result}} #
+
+
+- name: Deploy node js app #name of second play
+  hosts: node_app_server
+  become: true #enables become so you can make use of it
+  vars_files:
+    - variables.yaml
+  become_user: "{{user_name}}" #changed the user to kazeem but default user is still root
+  tasks:
+    - name: Unpack the nodejs file into remote  server
+      ansible.builtin.unarchive:
+        src: "{{file_location}}"
+        dest: /home/{{user_name}} #the directory where the unpack files will go.
+    - name: Install all the app dependecies
+      ansible.builtin.npm:
+        path: /home/{{user_name}}/package
+    - name: Start the node js app
+      ansible.builtin.command: #execute command on remote servers like we do in CLI
+        chdir: /home/{{user_name}}/package
+        cmd: node server & #or npm start
+      async: 1000 # this task will run asynchronously without blocking the terminal
+      poll: 0
+    - name: check if the app is running
+      ansible.builtin.shell:
+        cmd: ps aux | grep node
+      register: app_status #assigns the result of this task to a variable named app_status
+    - debug: msg={{app_status.stdout_lines}} #print the variable during execution
+
+
+
+
+
+
+
+
+
+
+    # - name: copy node js folder to a server
+    #   copy: # built in modukle to copy files.
+    #     src: ~/Desktop/DevOps/5.Cloud&Infrastructure/Exercises/node-project/app/bootcamp-node-project-1.0.0.tgz #where you are copying from
+    #     dest: /root/app-1.0.0.tgz #the path to put it on the remote server
+    # - name: Unpack the copied file
+    #   unarchive:
+    #     src: /root/app-1.0.0.tgz
+    #     dest: /root/ #the directory where the unpack files will go.
+    #     remote_src: yes #source is on a remote server
