@@ -14,7 +14,7 @@
           - npm
 
 
-- name: create a service user for node app
+- name: create a service user for node app #name of second play
   hosts: node_app_server
   vars_files:
     - variables.yaml
@@ -28,7 +28,7 @@
     - debug: msg={{user_creation_result}} #
 
 
-- name: Deploy node js app #name of second play
+- name: Deploy node js app #name of third play
   hosts: node_app_server
   become: true #enables become so you can make use of it
   vars_files:
