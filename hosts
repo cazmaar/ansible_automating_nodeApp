@@ -2,6 +2,6 @@
 46.101.89.87
 
 [node_app_server:vars]
-ansible_private_key_file=~/.ssh/Jenkins_server.pem
+ansible_private_key_file=~/.ssh/id_rsa
 ansible_user=root
 
